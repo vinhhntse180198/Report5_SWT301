@@ -17,7 +17,7 @@ public class AppointmentRequest {
     private LocalDate dob;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "(84|0[3|5|7|8|9])+([0-9]{8})\\b", message = "Invalid phone number format")
+    @Pattern(regexp = "(84|0[1|3|5|7|8|9])[0-9]{8}\\b", message = "Invalid phone number format")
     private String phone;
 
     @NotBlank(message = "Email is required")
@@ -49,7 +49,6 @@ public class AppointmentRequest {
 
     private String kitComponentName;
     private List<String> sampleTypes;
-
 
     public String getCollectionLocation() {
         return collectionLocation;

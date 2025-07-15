@@ -13,6 +13,12 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+
+import jakarta.validation.Validator;
+import jakarta.validation.Validation;
+import jakarta.validation.ConstraintViolation;
 
 import java.util.List;
 
@@ -28,7 +34,6 @@ public class AppointmentController {
             @Valid @RequestBody AppointmentRequest request) {
         return appointmentService.createGuestAppointment(serviceId, request);
     }
-
 
     @DeleteMapping("/delete-appointment/{id}")
     @PreAuthorize("hasAnyRole('STAFF', 'MANAGER')")
@@ -48,11 +53,23 @@ public class AppointmentController {
     @PostMapping("/create-appointment/{serviceId}")
     @PreAuthorize("hasAnyRole('CUSTOMER', 'STAFF', 'MANAGER')")
     public ResponseEntity<?> createAppointment(
-            @PathVariable ("serviceId") Long serviceId,
-            @Valid @RequestBody AppointmentRequest request) {
+            @PathVariable("serviceId") Long serviceId,
+            @RequestBody AppointmentRequest request,
+            BindingResult bindingResult) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        // Validate dữ liệu sau khi đã xác thực
+        jakarta.validation.Validator validator = jakarta.validation.Validation.buildDefaultValidatorFactory()
+                .getValidator();
+        java.util.Set<jakarta.validation.ConstraintViolation<AppointmentRequest>> violations = validator
+                .validate(request);
+        if (!violations.isEmpty()) {
+            return ResponseEntity.badRequest().build();
+        }
         String username = authentication.getName();
-        return appointmentService.createAppointment(serviceId ,request, username);
+        return appointmentService.createAppointment(serviceId, request, username);
     }
 
     /**
@@ -62,6 +79,9 @@ public class AppointmentController {
     @PreAuthorize("hasAnyRole('CUSTOMER', 'STAFF', 'MANAGER')")
     public ResponseEntity<?> viewUserAppointments() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         String username = authentication.getName();
         return appointmentService.viewAppointments(username);
     }
@@ -99,10 +119,12 @@ public class AppointmentController {
     public ResponseEntity<?> getAppointmentsByUsernameAndStatus(
             @RequestParam(required = false) String status) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         String username = authentication.getName();
 
         return ResponseEntity.ok(appointmentService.getAppointmentByUsernameAndStatus(username, status));
     }
-
 
 }

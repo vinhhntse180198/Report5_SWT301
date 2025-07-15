@@ -1,0 +1,16 @@
+[
+  {
+    "name": "AssertionError",
+    "matchedStatuses": ["failed"],
+    "messageRegex": ".*AssertionError.*"
+  },
+  {
+    "name": "Exception",
+    "matchedStatuses": ["broken"],
+    "traceRegex": ".*Exception.*"
+  },
+  {
+    "name": "Skipped",
+    "matchedStatuses": ["skipped"]
+  }
+] 

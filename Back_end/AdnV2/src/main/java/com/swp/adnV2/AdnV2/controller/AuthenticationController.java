@@ -21,6 +21,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -39,18 +41,23 @@ public class AuthenticationController {
     private UserRepository userRepository;
 
     @PostMapping("/login")
-    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) throws Exception {
+    public ResponseEntity<?> createAuthenticationToken(@RequestBody AuthenticationRequest authenticationRequest) {
         System.out.println("Login attempt for username: " + authenticationRequest.getUsername());
         System.out.println("Password provided: " + authenticationRequest.getPassword());
 
+        if (authenticationRequest.getUsername() == null || authenticationRequest.getPassword() == null ||
+                authenticationRequest.getUsername().isEmpty() || authenticationRequest.getPassword().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Username or password is empty");
+        }
+
         try {
             authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(), authenticationRequest.getPassword())
-            );
+                    new UsernamePasswordAuthenticationToken(authenticationRequest.getUsername(),
+                            authenticationRequest.getPassword()));
             System.out.println("Authentication successful");
         } catch (BadCredentialsException e) {
             System.out.println("Authentication failed: " + e.getMessage());
-            throw new Exception("Incorrect username or password", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Incorrect username or password");
         }
 
         final UserDetails userDetails = userDetailsService.loadUserByUsername(authenticationRequest.getUsername());
